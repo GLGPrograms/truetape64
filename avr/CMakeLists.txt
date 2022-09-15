@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 project(truetape64 C)
 
 SET(CMAKE_C_STANDARD 99)
-SET(MCU "attiny2313")
+SET(MCU "atmega328p")
 SET(F_CPU "16000000")
 SET(CMAKE_SYSTEM_NAME Generic)
 SET(CMAKE_C_COMPILER /usr/bin/avr-gcc)

@@ -8,11 +8,11 @@
 
 #define UART_UBRR           3       // 250kbps at 16Mhz
 
-#define LED_PIN             PB2
+#define LED_PIN             PB5
 #define LED_PORT            PORTB
 #define LED_PORT_DDR        DDRB
 
-#define SENSE_IN_PIN        PB0
+#define SENSE_IN_PIN        PB2
 #define SENSE_IN_PINS       PINB
 #define SENSE_IN_PORT       PORTB
 #define SENSE_IN_PORT_DDR   DDRB

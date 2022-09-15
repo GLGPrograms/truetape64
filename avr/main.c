@@ -14,9 +14,8 @@ volatile int8_t pulse_buf_h = -1, pulse_buf_t = -1;
 volatile bool pulse_buf_ovf = false;
 volatile bool cassette_sense = false;
 
-inline void enqueue_pulse(const volatile uint8_t *tm_overflow, const volatile uint16_t *tm_counter) {
-
-    if ((!cassette_sense) || pulse_buf_ovf) {
+void enqueue_pulse(const volatile uint8_t *tm_overflow, const volatile uint16_t *tm_counter) {
+    if ((cassette_sense) || pulse_buf_ovf) {
         return;
     }
 
@@ -39,18 +38,18 @@ inline void enqueue_pulse(const volatile uint8_t *tm_overflow, const volatile ui
     pulse_buf[pulse_buf_t].tm_overflows = *tm_overflow;
 }
 
-inline void send_pulse_data(const volatile pulselen_t *p) {
+void send_pulse_data(const volatile pulselen_t *p) {
     uint8_t checksum = 64;
 
     for (uint8_t i = 0; i < (uint8_t) sizeof(pulselen_t); i++) {
         uint8_t *t = ((uint8_t *) p) + i;
-        while (!(UCSRA & (1 << UDRE))) {}
-        UDR = *t;
+        while (!(UCSR0A & (1 << UDRE0))) {}
+        UDR0 = *t;
         checksum += *t;
     }
 
-    while (!(UCSRA & (1 << UDRE))) {}
-    UDR = checksum;
+    while (!(UCSR0A & (1 << UDRE0))) {}
+    UDR0 = checksum;
 }
 
 int main(void) {
@@ -68,16 +67,16 @@ int main(void) {
     SET_CASSETTE_SENSE;
 
     // Capturing falling edges with Timer/Counter 1
-    DDRD &= ~(1 << PD6); // Input on PD6
-    TIMSK |= (1 << ICIE1) | (1 << TOIE1);     //Set capture interrupt and overflow interrupt
+    DDRB &= ~(1 << PB0); // Input on PB0 (was PD6)
+    TIMSK1 |= (1 << ICIE1) | (1 << TOIE1);     //Set capture interrupt and overflow interrupt
     TCCR1B = (0 << ICNC1) | (0 << ICES1)
              | (0 << CS12) | (1 << CS11) | (0 << CS10);  //Set capture falling edge, /8 prescaler
 
     // USART init
-    UBRRL = UART_UBRR;
-    UBRRH = UART_UBRR >> 8;
-    UCSRB = (1 << RXEN) | (1 << TXEN) | (0 << U2X); // Enable RX and TX, disable 2X mode
-    UCSRC = (0 << USBS) | (1 << UCSZ1) | (1 << UCSZ0); // 8, N, 1
+    UBRR0L = UART_UBRR;
+    UBRR0H = UART_UBRR >> 8;
+    UCSR0B = (1 << TXEN0) | (0 << U2X0); // Enable RX and TX, disable 2X mode
+    UCSR0C = (0 << USBS0) | (1 << UCSZ01) | (1 << UCSZ00); // 8, N, 1
 
     // Blink when boot done
     LED_PORT |= 1 << LED_PIN;
@@ -87,10 +86,10 @@ int main(void) {
     sei();
     for (;;) {
 
-        tmp_sense = !(SENSE_IN_PINS & (1 << SENSE_IN_PIN) >> SENSE_IN_PIN); //FIXME Debounce maybe?
+        tmp_sense = SENSE_IN_PINS & (1 << SENSE_IN_PIN);
         if (tmp_sense != cassette_sense) {
             cassette_sense = tmp_sense;
-            if (cassette_sense) {
+            if (!cassette_sense) {
                 CLR_CASSETTE_SENSE;
             } else {
                 SET_CASSETTE_SENSE;
